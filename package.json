@@ -4,6 +4,7 @@
   "description": "Kubernetes sidecar log upload",
   "main": "index.js",
   "scripts": {
+    "start": "node .",
     "lint": "eslint .",
     "test": "npm run lint"
   },
