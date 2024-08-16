@@ -5,7 +5,7 @@ name: Nodejs CI
 
 on:
   # schedule:
-  # - cron: '38 17 * * 1'
+  # - cron: '37 17 * * 1'
   push:
     branches: [ main ]
   pull_request:
