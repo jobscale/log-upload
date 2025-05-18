@@ -3,6 +3,8 @@
 
 name: Nodejs CI
 
+# The workflow was triggered 1 times via automatically.
+
 on:
   # schedule:
   # - cron: '12 17 * * 1'
