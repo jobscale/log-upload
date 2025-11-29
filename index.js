@@ -1,12 +1,10 @@
-import readline from 'readline';
+import fs from 'fs';
 import path from 'path';
-import { statSync } from 'fs';
+import readline from 'readline';
 import chokidar from 'chokidar';
-import fs from 'fs-extra';
 
 const { FILE_PATH, LOG_ENDPOINT } = process.env;
 const logger = console;
-const wait = ms => new Promise(resolve => { setTimeout(resolve, ms); });
 
 class LogUpload {
   constructor({ logPath }) {
@@ -17,42 +15,39 @@ class LogUpload {
 
   getInode(filePath) {
     try {
-      return statSync(filePath).ino;
+      return fs.statSync(filePath).ino;
     } catch (error) {
       logger.error(`Error getting inode for ${filePath}:`, error);
       return null;
     }
   }
 
-  async uploadLogLines(lines) {
+  async uploadLogLines(lines, opts = { attempt: 2 }) {
     const dir = this.logPath.split('/');
     const fname = dir[dir.length - 1];
-    const response = await fetch(`${LOG_ENDPOINT}/${fname}`, {
+    const res = await fetch(`${LOG_ENDPOINT}/${fname}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: lines.map(line => JSON.stringify({ log: line })).join('\n'),
     });
-    if (!response.ok) {
-      throw new Error(`Failed to upload: ${response.statusText}`);
+    if (res.ok) {
+      logger.debug({ 'Uploaded log lines': lines.length });
+      return;
     }
-    logger.debug({ 'Uploaded log lines': lines.length });
+    if (--opts.attempt <= 0) {
+      throw new Error(`Failed to upload: ${res.statusText}`);
+    }
+    await new Promise(resolve => { setTimeout(resolve, 200); });
+    await this.uploadLogLines(lines, opts);
   }
 
   async processLogFile() {
     const input = fs.createReadStream(this.logPath, { start: this.lastReadPosition });
-    const rl = readline.createInterface({ input, crlfDelay: Infinity });
+    const readable = readline.createInterface({ input, crlfDelay: Infinity });
     const lines = [];
-    for await (const line of rl) lines.push(line);
+    for await (const line of readable) lines.push(line);
     if (lines.length > 0) {
-      await this.uploadLogLines(lines)
-      .catch(e => {
-        logger.warn('Retry', e);
-        // 最初のエラーは警告とし、１度だけリトライ
-        return wait(200).then(() => this.uploadLogLines(lines));
-      })
-      .catch(e => {
-        logger.error(e);
-      });
+      await this.uploadLogLines(lines).catch(e => logger.error(e.message));
       this.lastReadPosition += lines.reduce((acc, line) => acc + Buffer.byteLength(`${line}\n`), 0);
     }
   }
@@ -70,7 +65,7 @@ class LogUpload {
         await this.processLogFile();
       }
     });
-    watcher.on('error', e => logger.error('Watcher error:', e));
+    watcher.on('error', e => logger.error({ Watcher: e.toString() }));
   }
 }
 
