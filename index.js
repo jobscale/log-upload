@@ -1,8 +1,8 @@
-const fs = require('fs-extra');
-const readline = require('readline');
-const chokidar = require('chokidar');
-const path = require('path');
-const { statSync } = require('fs');
+import readline from 'readline';
+import path from 'path';
+import { statSync } from 'fs';
+import chokidar from 'chokidar';
+import fs from 'fs-extra';
 
 const { FILE_PATH, LOG_ENDPOINT } = process.env;
 const logger = console;
