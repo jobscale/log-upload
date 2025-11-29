@@ -1,7 +1,7 @@
 {
   "name": "log-upload",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Kubernetes sidecar log upload",
   "keywords": [],
   "author": "",
@@ -11,7 +11,7 @@
   "scripts": {
     "start": "node .",
     "lint": "eslint",
-    "test": "npm run lint"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "pre-commit": "test",
   "dependencies": {

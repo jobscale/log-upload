@@ -1,12 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import readline from 'readline';
 import chokidar from 'chokidar';
 
 const { FILE_PATH, LOG_ENDPOINT } = process.env;
 const logger = console;
 
-class LogUpload {
+export class LogUpload {
   constructor({ logPath }) {
     this.logPath = logPath;
     this.lastReadPosition = 0;
@@ -16,8 +17,8 @@ class LogUpload {
   getInode(filePath) {
     try {
       return fs.statSync(filePath).ino;
-    } catch (error) {
-      logger.error(`Error getting inode for ${filePath}:`, error);
+    } catch (e) {
+      logger.error(`Error getting inode for ${filePath}:`, e.message);
       return null;
     }
   }
@@ -52,7 +53,7 @@ class LogUpload {
     }
   }
 
-  async main() {
+  async start() {
     await this.processLogFile();
     const watcher = chokidar.watch(path.dirname(this.logPath), { persistent: true });
     watcher.on('all', async (event, filePath) => {
@@ -71,8 +72,10 @@ class LogUpload {
 
 const main = () => {
   FILE_PATH.split(',').forEach(logPath => {
-    new LogUpload({ logPath }).main();
+    new LogUpload({ logPath }).start();
   });
 };
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}
