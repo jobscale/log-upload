@@ -1,4 +1,4 @@
-FROM node:lts-tixie-slim
+FROM node:lts-trixie-slim
 SHELL ["bash", "-c"]
 WORKDIR /home/node
 USER node
